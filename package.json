@@ -1,0 +1,29 @@
+{
+  "name": "jsondiffpatch-html",
+  "version": "1.0.0",
+  "description": "CLI tool to generate HTML diff reports from JSON files using jsondiffpatch",
+  "main": "bin/jsondiffpatch-html.js",
+  "bin": {
+    "jsondiffpatch-html": "./bin/jsondiffpatch-html.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node bin/jsondiffpatch-html.js",
+    "build": "pkg . --targets node18-macos,node18-win,node18-linux --output dist/jsondiffpatch-html"
+  },
+  "keywords": [
+    "json",
+    "diff",
+    "html",
+    "cli",
+    "jsondiffpatch"
+  ],
+  "author": "Yaohui Wu",
+  "license": "MIT",
+  "devDependencies": {
+    "pkg": "^5.3.1"
+  },
+  "dependencies": {
+    "jsondiffpatch": "^0.6.1"
+  }
+}
