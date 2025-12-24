@@ -29,6 +29,8 @@ const right = JSON.parse(fs.readFileSync(newFile, 'utf8'));
 // 生成 delta
 const delta = jdp.diff(left, right);
 
+const diffContent = delta ? htmlFormatter.format(delta, left) : "No diff";
+
 // 生成 HTML
 // 通过实例访问 jdp.formatters.html
 const releasedPkgUrl = "https://esm.sh/jsondiffpatch@0.6.0";
@@ -112,7 +114,7 @@ const hideUnchanged = (node, delay) => showUnchanged(false, node, delay);
 <body>
 <input type="checkbox" id="hide-unchanged"><label>Hide unchanged<label>
 <div id='the-diff'>
-${htmlFormatter.format(delta, left)}
+${diffContent}
 </div>
 <script type="text/javascript">
 document.getElementById('hide-unchanged').addEventListener("change", (e) => {
