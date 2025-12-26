@@ -3,6 +3,62 @@ import fs from 'fs';
 import { create } from 'jsondiffpatch';
 import * as htmlFormatter from 'jsondiffpatch/formatters/html';
 
+/**
+ * 统计 jsondiffpatch delta 中「第一级属性」的差异
+ *
+ * @param {object} delta jsondiffpatch.diff(left, right) 的结果
+ * @returns {{
+ *   added: string[],
+ *   removed: string[],
+ *   updated: string[]
+ * }}
+ */
+function statTopLevelDiff(delta) {
+  const result = {
+    added: [],
+    removed: [],
+    updated: [],
+  };
+
+  if (!delta || typeof delta !== 'object') {
+    return result;
+  }
+
+  for (const key of Object.keys(delta)) {
+    if (key === '_t') continue; // 忽略数组标记
+
+    const value = delta[key];
+
+    // 情况 1：数组形式（新增 / 删除 / 替换）
+    if (Array.isArray(value)) {
+      // 新增：[newValue]
+      if (value.length === 1) {
+        result.added.push(key);
+        continue;
+      }
+
+      // 删除：[oldValue, 0, 0]
+      if (value.length === 3 && value[1] === 0 && value[2] === 0) {
+        result.removed.push(key);
+        continue;
+      }
+
+      // 替换：[oldValue, newValue]
+      if (value.length === 2) {
+        result.updated.push(key);
+        continue;
+      }
+    }
+
+    // 情况 2：对象形式 → 子属性发生变化
+    if (typeof value === 'object') {
+      result.updated.push(key);
+    }
+  }
+
+  return result;
+}
+
 // 创建实例
 const jdp = create();
 
@@ -30,6 +86,7 @@ const right = JSON.parse(fs.readFileSync(newFile, 'utf8'));
 const delta = jdp.diff(left, right);
 
 const diffContent = delta ? htmlFormatter.format(delta, left) : "No diff";
+const statistics = statTopLevelDiff(delta);
 
 // 生成 HTML
 // 通过实例访问 jdp.formatters.html
@@ -113,6 +170,11 @@ const hideUnchanged = (node, delay) => showUnchanged(false, node, delay);
 </head>
 <body>
 <input type="checkbox" id="hide-unchanged"><label>Hide unchanged<label>
+<div>
+<span>Added: ${statistics.added.length} ${statistics.added}</span><br/>
+<span>Removed: ${statistics.removed.length} ${statistics.removed}</span><br/>
+<span>Updated: ${statistics.updated.length} ${statistics.updated}</span>
+</div>
 <div id='the-diff'>
 ${diffContent}
 </div>
