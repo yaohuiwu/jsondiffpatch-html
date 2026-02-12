@@ -2,27 +2,17 @@
 
 CLI tool to generate HTML diff reports from JSON files using `jsondiffpatch`.
 
-## Install Dependecies
+## Install it
 
-```bash
-npm install
-```
-
-## Add execute permission
 
 ```
-chmod +x bin/jsondiffpatch-html.js
+npm i -g jsondiffpatch-html
 ```
 
-## Link the command
+## Use it
 
 ```
-npm link
-```
-
-## Run the command
-
-```
-jsondiffpatch-html left.json right.json -o diff.html
+jsondiffpatch-html -h
+Usage: jsondiffpatch-html old.json new.json [-o output.html]
 ```
 
