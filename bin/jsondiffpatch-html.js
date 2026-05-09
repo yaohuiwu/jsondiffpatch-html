@@ -25,33 +25,19 @@ function statTopLevelDiff(delta) {
   }
 
   for (const key of Object.keys(delta)) {
-    if (key === '_t') continue; // 忽略数组标记
+    if (key === '_t') continue;
 
     const value = delta[key];
 
-    // 情况 1：数组形式（新增 / 删除 / 替换）
     if (Array.isArray(value)) {
-      // 新增：[newValue]
       if (value.length === 1) {
         result.added.push(key);
-        continue;
-      }
-
-      // 删除：[oldValue, 0, 0]
-      if (value.length === 3 && value[1] === 0 && value[2] === 0) {
+      } else if (value.length === 3 && value[1] === 0 && value[2] === 0) {
         result.removed.push(key);
-        continue;
-      }
-
-      // 替换：[oldValue, newValue]
-      if (value.length === 2) {
+      } else if (value.length === 2) {
         result.updated.push(key);
-        continue;
       }
-    }
-
-    // 情况 2：对象形式 → 子属性发生变化
-    if (typeof value === 'object') {
+    } else if (value !== null && typeof value === 'object') {
       result.updated.push(key);
     }
   }
@@ -79,14 +65,27 @@ if (oIdx >= 0 && args[oIdx + 1]) {
 }
 
 // 读取 JSON
-const left = JSON.parse(fs.readFileSync(oldFile, 'utf8'));
-const right = JSON.parse(fs.readFileSync(newFile, 'utf8'));
+let left, right;
+try {
+  left = JSON.parse(fs.readFileSync(oldFile, 'utf8'));
+} catch (e) {
+  console.error(`Error reading ${oldFile}: ${e.message}`);
+  process.exit(1);
+}
+try {
+  right = JSON.parse(fs.readFileSync(newFile, 'utf8'));
+} catch (e) {
+  console.error(`Error reading ${newFile}: ${e.message}`);
+  process.exit(1);
+}
 
 // 生成 delta
 const delta = jdp.diff(left, right);
 
-const diffContent = delta ? htmlFormatter.format(delta, left) : "No diff";
+const diffContent = delta ? htmlFormatter.format(delta, left) : '<p>No diff</p>';
 const statistics = statTopLevelDiff(delta);
+
+const fmtKeys = (keys) => keys.length ? keys.join(', ') : '(none)';
 
 // 生成 HTML
 // 通过实例访问 jdp.formatters.html
@@ -145,7 +144,7 @@ const showUnchanged = (show, node, delay) => {
         list.remove(classes.hidden);
     }
     const intervalId = setInterval(() => {
-        adjustArrows(el);
+        if (typeof adjustArrows === 'function') adjustArrows(el);
     }, 100);
     setTimeout(() => {
         list.remove(classes.showing);
@@ -169,11 +168,11 @@ const hideUnchanged = (node, delay) => showUnchanged(false, node, delay);
     </script>
 </head>
 <body>
-<input type="checkbox" id="hide-unchanged"><label>Hide unchanged<label>
+<input type="checkbox" id="hide-unchanged"><label for="hide-unchanged">Hide unchanged</label>
 <div>
-<span>Added: ${statistics.added.length} ${statistics.added}</span><br/>
-<span>Removed: ${statistics.removed.length} ${statistics.removed}</span><br/>
-<span>Updated: ${statistics.updated.length} ${statistics.updated}</span>
+<span>Added: ${statistics.added.length} &mdash; ${fmtKeys(statistics.added)}</span><br/>
+<span>Removed: ${statistics.removed.length} &mdash; ${fmtKeys(statistics.removed)}</span><br/>
+<span>Updated: ${statistics.updated.length} &mdash; ${fmtKeys(statistics.updated)}</span>
 </div>
 <div id='the-diff'>
 ${diffContent}
